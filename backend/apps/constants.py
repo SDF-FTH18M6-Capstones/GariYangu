@@ -1,11 +1,9 @@
-"""Allowed values shared by schemas and routes."""
 ROLES_SELF_SERVICE = ("buyer", "dealer")
 FUELS = ("petrol", "diesel", "hybrid", "electric")
 TRANSMISSIONS = ("manual", "automatic")
 BODIES = ("sedan", "suv", "hatchback", "pickup", "van", "wagon", "coupe")
 LISTING_STATUSES = ("draft", "active", "sold", "hidden")
 
-# The 47 counties of Kenya.
 COUNTIES = (
     "Baringo", "Bomet", "Bungoma", "Busia", "Elgeyo-Marakwet", "Embu", "Garissa", "Homa Bay", "Isiolo", "Kajiado",
     "Kakamega", "Kericho", "Kiambu", "Kilifi", "Kirinyaga", "Kisii", "Kisumu", "Kitui", "Kwale", "Laikipia", "Lamu",
