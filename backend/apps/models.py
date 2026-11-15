@@ -11,7 +11,7 @@ def utcnow():
 
 
 def iso(dt):
-    """Naive-UTC datetime -> ISO string with 'Z' so JavaScript parses it as UTC."""
+    
     return dt.isoformat(timespec="seconds") + "Z" if dt else None
 
 
