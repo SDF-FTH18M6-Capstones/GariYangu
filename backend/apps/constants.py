@@ -1,4 +1,3 @@
-
 ROLES_SELF_SERVICE = ("buyer", "dealer")
 FUELS = ("petrol", "diesel", "hybrid", "electric")
 TRANSMISSIONS = ("manual", "automatic")
