@@ -33,7 +33,7 @@ export default function VerifyDealers() {
 
   return (
     <>
-      <PageHead title="Verify dealers" sub="Check each KRA PIN before approving. Approved dealers get the verified badge and can send offers." />
+      <PageHead title="Verify dealers" sub="Check each ID number before approving. Approved dealers get the verified badge and can send offers." />
       <div className="container page-body">
         {msg && <Notice tone={msg.tone}>{msg.text}</Notice>}
         <div className="tabs" role="tablist">
@@ -50,7 +50,7 @@ export default function VerifyDealers() {
               <div>
                 <h2 className="h3">{u.dealer.business_name}</h2>
                 <div className="kv">
-                  <span>KRA PIN</span><b>{u.dealer.kra_pin}</b>
+                  <span>ID number</span><b>{u.dealer.id_number}</b>
                   <span>County</span><b>{u.dealer.county}</b>
                   <span>Address</span><b>{u.dealer.address || '—'}</b>
                   <span>Contact</span><b>{u.full_name} · {u.phone || '—'}</b>
