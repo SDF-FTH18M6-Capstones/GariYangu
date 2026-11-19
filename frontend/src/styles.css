@@ -1,4 +1,4 @@
-
+/* ===== Gari Yangu design system ===== */
 :root {
   --navy: #0b1b34;
   --navy-2: #13294d;
@@ -315,7 +315,7 @@ img, svg { display: block; max-width: 100%; }
 .star-input button { background: none; border: 0; font-size: 26px; color: #c9ced8; padding: 0 2px; }
 .star-input button.on { color: var(--amber); }
 
-/*dealer */
+/* dealer */
 .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 .stat { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; display: grid; gap: 4px; box-shadow: var(--shadow); }
 a.stat:hover { border-color: var(--blue); }
@@ -376,7 +376,10 @@ a.stat:hover { border-color: var(--blue); }
   .table td.right { justify-content: flex-start; }
 }
 
-
+/* =========================================================
+   GARI YANGU 2.0 — FUTURISTIC LUXURY VISUAL SYSTEM
+   Existing component/API classes are intentionally retained.
+   ========================================================= */
 :root {
   color-scheme: dark;
   --navy:#080b09; --navy-2:#111914; --blue:#b8ff36; --blue-dark:#9cdd25;
@@ -726,3 +729,4 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @media(max-width:780px) {
   .hero-art > .hero-vehicle-photo { width: 130%; right: -10%; height: 260px; }
 }
+.link-btn:disabled { opacity: .55; cursor: default; }
