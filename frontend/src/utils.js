@@ -5,7 +5,7 @@ export const formatKm = (n) => (n == null ? '—' : Number(n).toLocaleString('en
 
 export const cap = (s) => (s === 'suv' ? 'SUV' : s ? s[0].toUpperCase() + s.slice(1) : '')
 
-// Rough monthly instalment (illustrative): 20% deposit, 60 months, 14% p.a.
+
 export function monthlyEstimate(price) {
   const principal = price * 0.8
   const r = 0.14 / 12
@@ -25,7 +25,7 @@ export const daysLeft = (iso) => Math.max(0, Math.ceil((new Date(iso).getTime() 
 export const formatDate = (iso) =>
   new Date(iso).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })
 
-// "2016+ · Petrol · SUV · up to KES 3,800,000 · Nairobi"
+
 export function describeRequest(r) {
   const parts = []
   if (r.min_year) parts.push(`${r.min_year}+`)
@@ -36,4 +36,4 @@ export function describeRequest(r) {
   return parts.join(' · ')
 }
 
-export const KRA_PIN_RE = /^[AP]\d{9}[A-Z]$/i
+export const ID_NUMBER_RE = /^\d{7,8}$/ 
