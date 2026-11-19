@@ -1,11 +1,4 @@
-// API client for the Flask backend (see /backend). Every call goes through request() below, which
-// applies two small "interceptors":
-//   * request interceptor  -> attaches `Authorization: Bearer <JWT>` when a token is stored
-//   * response interceptor -> turns errors into Error objects with `.status`, and on a 401 for a signed-in
-//                             user clears the token and fires `gy:unauthorized` so AuthContext can log out.
-//
-// Dev: vite proxies /api -> http://localhost:8000. For a separately hosted API set VITE_API_URL
-// (e.g. VITE_API_URL=https://api.example.com) when building.
+
 const API_ORIGIN = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 const BASE = API_ORIGIN + '/api'
 export const mediaUrl = (path) => !path ? '' : (/^https?:\/\//i.test(path) ? path : API_ORIGIN + path)
@@ -17,13 +10,13 @@ const setToken = (t) => { try { t ? localStorage.setItem(TOKEN_KEY, t) : localSt
 
 const NETWORK_ERROR = 'Cannot reach the server. Check your connection and that the backend is running.'
 
-// Request interceptor: add the bearer token.
+
 function withAuth(headers) {
   const token = getToken()
   return token ? { ...headers, Authorization: 'Bearer ' + token } : headers
 }
 
-// Response interceptor: parse the body, normalise errors, handle expired sessions.
+
 async function handleResponse(res, hadToken, path, fallback) {
   const data = await res.json().catch(() => null) // empty / non-JSON body
   if (res.ok) return data
@@ -53,27 +46,32 @@ const get = (p) => request('GET', p)
 const post = (p, b = {}) => request('POST', p, b)
 const uploadRequest = (path, formData) => send('POST', path, { form: formData })
 
-/* ---------------- auth ---------------- */
+
 export async function login(email, password) {
   const { token, user } = await post('/auth/login', { email, password })
   setToken(token)
   return user
 }
-export async function register(data) {
-  const { token, user } = await post('/auth/register', data)
+
+export const register = (data) => post('/auth/register', data)
+export async function verifySignup(email, code) {
+  const { token, user } = await post('/auth/register/verify', { email, code })
   setToken(token)
   return user
 }
+export const resendSignupCode = (email) => post('/auth/register/resend', { email })
+export const forgotPassword = (email) => post('/auth/forgot', { email })
+export const resetPassword = (email, code, password) => post('/auth/reset', { email, code, password })
 export const logout = () => setToken(null)
 export const getUser = () => get('/auth/me')
 
-/* ---------------- cars ---------------- */
+
 export const listCars = () => get('/cars')
 export async function getCar(id) {
   try { return await get(`/cars/${id}`) } catch (e) { if (e.status === 404) return null; throw e }
 }
 
-/* ---------------- buyer: requests & offers ---------------- */
+
 export const createRequest = (_buyerId, f) => post('/requests', f)
 export const myRequests = () => get('/requests/mine')
 export const updateRequest = (id, f) => request('PUT', `/requests/${id}`, f)
@@ -102,6 +100,6 @@ export const uploadListingImages = (listingId, files) => {
 export const setPrimaryListingImage = (listingId, imageId) => post(`/dealer/listings/${listingId}/images/${imageId}/primary`)
 export const deleteListingImage = (listingId, imageId) => request('DELETE', `/dealer/listings/${listingId}/images/${imageId}`)
 
-/* ---------------- admin ---------------- */
+
 export const allDealers = () => get('/admin/dealers')
 export const reviewDealer = (userId, decision, reason = '') => post(`/admin/dealers/${userId}/review`, { decision, reason })
