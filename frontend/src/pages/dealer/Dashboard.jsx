@@ -6,7 +6,7 @@ import { Empty, Loading, LoadError, Notice, PageHead, StatusBadge, Stars } from 
 import { formatKES, timeAgo } from '../../utils.js'
 
 export function DealerStatusNotice({ dealer }) {
-  if (dealer?.status === 'pending') return <Notice tone="warn">Your dealer account is <b>awaiting verification</b>. You can manage listings now, but you can only send offers once an admin approves your KRA PIN.</Notice>
+  if (dealer?.status === 'pending') return <Notice tone="warn">Your dealer account is <b>awaiting verification</b>. You can manage listings now, but you can only send offers once an admin approves your ID number.</Notice>
   if (dealer?.status === 'rejected') return <Notice tone="error">Your dealer application was rejected{dealer.rejection_reason ? `: ${dealer.rejection_reason}` : '.'} Contact support to resubmit.</Notice>
   return null
 }
