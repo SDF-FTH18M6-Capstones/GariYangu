@@ -1,8 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import * as api from './api.js'
 
-// The signed-in user is cached in localStorage for instant page loads; the JWT itself is
-// kept by api.js. refresh() re-validates both against the backend.
+
 const AuthContext = createContext(null)
 const KEY = 'gariyangu_user'
 
@@ -19,24 +18,26 @@ export function AuthProvider({ children }) {
   const set = (u) => { setUser(u); store(u); return u }
 
   const login = async (email, password) => set(await api.login(email, password))
-  const register = async (data) => set(await api.register(data))
+  const register = (data) => api.register(data) 
+  const verifySignup = async (email, code) => set(await api.verifySignup(email, code))
   const logout = () => { api.logout(); set(null) }
-  // Re-read the user (e.g. dealer status changed after admin review).
+  
   const refresh = useCallback(async () => {
     if (!readStored()) return null
-    try { return set(await api.getUser()) } catch (e) { return e.status === 401 ? set(null) : readStored() } // offline: keep the cached user
+    try { return set(await api.getUser()) } catch (e) { return e.status === 401 ? set(null) : readStored() } 
   }, [])
 
-  // A 401 from any API call (expired or revoked token) clears the cached user, so RequireRole sends them to /login.
+  
   useEffect(() => {
     const onUnauthorized = () => set(null)
     window.addEventListener(api.UNAUTHORIZED_EVENT, onUnauthorized)
     return () => window.removeEventListener(api.UNAUTHORIZED_EVENT, onUnauthorized)
   }, [])
 
+  
   useEffect(() => { refresh() }, [refresh])
 
-  return <AuthContext.Provider value={{ user, login, register, logout, refresh }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, login, register, verifySignup, logout, refresh }}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => useContext(AuthContext)
