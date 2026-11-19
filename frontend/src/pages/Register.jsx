@@ -16,10 +16,10 @@ export default function Register() {
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
   const dealer = f.role === 'dealer'
 
-  const [step, setStep] = useState('form') // 'form' -> 'code'
+  const [step, setStep] = useState('form') 
   const [code, setCode] = useState('')
   const [info, setInfo] = useState('')
-  const [wait, setWait] = useState(0) // seconds until "Resend code" is allowed
+  const [wait, setWait] = useState(0) 
 
   useEffect(() => {
     if (wait <= 0) return
@@ -27,7 +27,7 @@ export default function Register() {
     return () => clearTimeout(t)
   }, [wait])
 
-  // Step 1: validate the form and have the server email a 6-digit code.
+  
   const submit = async (e) => {
     e.preventDefault()
     setError(''); setInfo('')
@@ -44,7 +44,7 @@ export default function Register() {
     }
   }
 
-  // Step 2: check the code, which creates the account and signs the person in.
+  
   const verify = async (e) => {
     e.preventDefault()
     setError(''); setInfo('')
