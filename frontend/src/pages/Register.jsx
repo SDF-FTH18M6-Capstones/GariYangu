@@ -1,32 +1,94 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth, homeFor } from '../AuthContext.jsx'
 import { COUNTIES } from '../constants.js'
-import { KRA_PIN_RE } from '../utils.js'
+import { ID_NUMBER_RE } from '../utils.js'
 import { Notice } from '../components/ui.jsx'
+import { resendSignupCode } from '../api.js'
 
 export default function Register() {
-  const { register } = useAuth()
+  const { register, verifySignup } = useAuth()
   const nav = useNavigate()
   const loc = useLocation()
-  const [f, setF] = useState({ role: 'buyer', full_name: '', email: '', phone: '', password: '', county: '', business_name: '', kra_pin: '', address: '' })
+  const [f, setF] = useState({ role: 'buyer', full_name: '', email: '', phone: '', password: '', county: '', business_name: '', id_number: '', address: '' })
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
   const dealer = f.role === 'dealer'
 
+  const [step, setStep] = useState('form') // 'form' -> 'code'
+  const [code, setCode] = useState('')
+  const [info, setInfo] = useState('')
+  const [wait, setWait] = useState(0) // seconds until "Resend code" is allowed
+
+  useEffect(() => {
+    if (wait <= 0) return
+    const t = setTimeout(() => setWait(wait - 1), 1000)
+    return () => clearTimeout(t)
+  }, [wait])
+
+  // Step 1: validate the form and have the server email a 6-digit code.
   const submit = async (e) => {
     e.preventDefault()
-    setError('')
+    setError(''); setInfo('')
     if (f.password.length < 8) return setError('Password must be at least 8 characters.')
-    if (dealer && !KRA_PIN_RE.test(f.kra_pin.trim())) return setError('KRA PIN looks wrong. It should be a letter, 9 digits and a letter, e.g. A123456789Z.')
+    if (dealer && !ID_NUMBER_RE.test(f.id_number.trim())) return setError('ID number looks wrong. It should be 7 or 8 digits.')
     setBusy(true)
     try {
-      const u = await register(f)
+      const r = await register({ ...f, id_number: f.id_number.trim() })
+      setStep('code'); setWait(r.resend_after || 30)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // Step 2: check the code, which creates the account and signs the person in.
+  const verify = async (e) => {
+    e.preventDefault()
+    setError(''); setInfo('')
+    if (!/^\d{6}$/.test(code)) return setError('Enter the 6-digit code.')
+    setBusy(true)
+    try {
+      const u = await verifySignup(f.email, code)
       nav(loc.state?.from || homeFor(u), { replace: true })
     } catch (err) {
       setError(err.message); setBusy(false)
     }
+  }
+
+  const resend = async () => {
+    setError(''); setInfo('')
+    try {
+      const r = await resendSignupCode(f.email)
+      setWait(r.resend_after || 30); setCode(''); setInfo('We sent you a new code.')
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  if (step === 'code') {
+    return (
+      <div className="auth-wrap">
+        <form className="auth-card" onSubmit={verify}>
+          <h1>Check your email</h1>
+          <p className="muted">We sent a 6-digit code to <b>{f.email}</b>. It expires in 10 minutes.</p>
+          {error && <Notice tone="error">{error}</Notice>}
+          {info && <Notice>{info}</Notice>}
+          <div className="field">
+            <label htmlFor="otp">Verification code</label>
+            <input id="otp" inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} placeholder="123456"
+              required autoFocus value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
+          </div>
+          <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? 'Verifying…' : 'Verify and create account'}</button>
+          <p className="muted center">
+            Didn't get it? <button type="button" className="link-btn" disabled={wait > 0} onClick={resend}>{wait > 0 ? `Resend code in ${wait}s` : 'Resend code'}</button>
+            {' · '}<button type="button" className="link-btn" onClick={() => { setStep('form'); setCode(''); setError(''); setInfo('') }}>Change email</button>
+          </p>
+        </form>
+      </div>
+    )
   }
 
   return (
@@ -74,8 +136,8 @@ export default function Register() {
                 <input id="biz" required value={f.business_name} onChange={set('business_name')} />
               </div>
               <div className="field">
-                <label htmlFor="kra">KRA PIN</label>
-                <input id="kra" required placeholder="A123456789Z" maxLength={11} value={f.kra_pin} onChange={set('kra_pin')} style={{ textTransform: 'uppercase' }} />
+                <label htmlFor="idn">National ID number</label>
+                <input id="idn" required inputMode="numeric" placeholder="12345678" pattern="\d{7,8}" title="7 or 8 digits" maxLength={8} value={f.id_number} onChange={(e) => setF({ ...f, id_number: e.target.value.replace(/\D/g, '') })} />
               </div>
               <div className="field">
                 <label htmlFor="addr">Yard address</label>
@@ -85,9 +147,9 @@ export default function Register() {
           )}
         </div>
 
-        {dealer && <Notice>After signing up, our team reviews your KRA PIN. You can set up listings straight away, but can only send offers once approved.</Notice>}
+        {dealer && <Notice>After signing up, our team reviews your ID number. You can set up listings straight away, but can only send offers once approved.</Notice>}
 
-        <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? 'Creating account…' : 'Create account'}</button>
+        <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? 'Sending code…' : 'Continue'}</button>
         <p className="muted center">Already registered? <Link to="/login" state={loc.state} className="link">Log in</Link></p>
       </form>
     </div>
