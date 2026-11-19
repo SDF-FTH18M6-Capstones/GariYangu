@@ -75,7 +75,7 @@ export default function Home() {
             <SearchCard />
             <div className="hero-checks">
               <span><Tick /> Free for buyers</span>
-              <span><Tick /> KRA-verified dealers</span>
+              <span><Tick /> ID-verified dealers</span>
               <span><Tick /> No yard-hopping</span>
             </div>
           </div>
@@ -98,10 +98,10 @@ export default function Home() {
       <section className="trust">
         <div className="container trust-grid">
           {[
-            ['🛡️', 'Verified dealers', 'KRA PIN checked'],
-            ['💸', 'Best price', 'Dealers compete'],
-            ['⏱️', 'Save time', 'Offers come to you'],
-            ['🆓', '100% free', 'For every buyer'],
+            [, 'Verified dealers', 'ID number checked'],
+            [, 'Best price', 'Dealers compete'],
+            [, 'Save time', 'Offers come to you'],
+            [, '100% free', 'For every buyer'],
           ].map(([ico, t, s]) => (
             <div className="trust-item" key={t}>
               <div className="trust-ico" style={{ fontSize: 22 }}>{ico}</div>
@@ -189,7 +189,7 @@ export default function Home() {
               <div className="cta-stat"><b>47</b><span>counties covered</span></div>
               <div className="cta-stat"><b>0</b><span>listing fees (demo)</span></div>
               <div className="cta-stat"><b>1</b><span>offer per request</span></div>
-              <div className="cta-stat"><b>✔</b><span>KRA-verified badge</span></div>
+              <div className="cta-stat"><b>✔</b><span>ID-verified badge</span></div>
             </div>
           </div>
         </div>
