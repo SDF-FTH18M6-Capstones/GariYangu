@@ -1,5 +1,4 @@
-// Static option lists used by forms and filters (makes, body types, counties, FAQ text).
-// Listings, requests and offers all come from the Flask API (see api.js).
+
 
 export const MAKES = [
   'Toyota', 'Mazda', 'Subaru', 'Nissan', 'Honda', 'Volkswagen',
@@ -37,7 +36,7 @@ export const CARS = [
 
 export const FAQS = [
   { q: 'Is Gari Yangu free for buyers?', a: 'Yes. Posting a request and receiving offers is completely free. You only pay the dealer if you decide to buy.' },
-  { q: 'How are dealers verified?', a: 'Every dealer submits their business name and KRA PIN, and our team approves each profile before they can send offers.' },
+  { q: 'How are dealers verified?', a: 'Every dealer submits their business name and National ID number, and our team approves each profile before they can send offers.' },
   { q: 'How many offers will I get?', a: 'It depends on the car and your county, but most requests receive several offers within a few days. Your request stays open until you close it or it expires.' },
   { q: 'Do I have to accept an offer?', a: 'No. Compare offers at your own pace, accept the one you like, or decline them all.' },
 ]
