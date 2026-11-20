@@ -1,11 +1,13 @@
 from datetime import timedelta
 from functools import wraps
 
-import jwt
-from flask import current_app, g, jsonify, request
+from flask import current_app, g, jsonify
+from flask_jwt_extended import create_access_token, get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended.exceptions import JWTExtendedException
+from jwt.exceptions import ExpiredSignatureError, PyJWTError
 
-from .extensions import db
-from .models import User, utcnow
+from .extensions import db, jwt
+from .models import User
 
 
 class ApiError(Exception):
@@ -15,24 +17,37 @@ class ApiError(Exception):
 
 
 def make_token(user):
-    payload = {"sub": str(user.id), "exp": utcnow() + timedelta(hours=current_app.config["TOKEN_HOURS"])}
-    return jwt.encode(payload, current_app.config["SECRET_KEY"], algorithm="HS256")
+    return create_access_token(identity=str(user.id), expires_delta=timedelta(hours=current_app.config["TOKEN_HOURS"]))
+
+
+@jwt.unauthorized_loader
+def _missing(reason):
+    return jsonify(error="Please sign in."), 401
+
+
+@jwt.invalid_token_loader
+def _invalid(reason):
+    return jsonify(error="Your session is invalid. Please sign in again."), 401
+
+
+@jwt.expired_token_loader
+def _expired(header, data):
+    return jsonify(error="Your session has expired. Please sign in again."), 401
 
 
 def _current_user():
-    header = request.headers.get("Authorization", "")
-    if not header.startswith("Bearer "):
-        return None
     try:
-        data = jwt.decode(header[7:], current_app.config["SECRET_KEY"], algorithms=["HS256"])
-        user = db.session.get(User, int(data["sub"]))
-    except (jwt.PyJWTError, ValueError, KeyError):
+        verify_jwt_in_request()
+        user = db.session.get(User, int(get_jwt_identity()))
+    except ExpiredSignatureError:
+        raise ApiError("Your session has expired. Please sign in again.", 401)
+    except (JWTExtendedException, PyJWTError, ValueError, TypeError):
         return None
     return user if user and user.is_active else None
 
 
 def login_required(*roles):
-   
+    
     def deco(fn):
         @wraps(fn)
         def wrapper(*a, **kw):
