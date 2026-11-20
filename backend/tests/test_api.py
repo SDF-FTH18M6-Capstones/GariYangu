@@ -1,24 +1,4 @@
-import pytest
-
-from app import create_app
-from app.extensions import db
-from app.seed import seed
-
-
-@pytest.fixture()
-def c():
-    app = create_app({"TESTING": True, "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:", "SECRET_KEY": "test-secret-key-that-is-long-enough-123456"})
-    with app.app_context():
-        db.create_all()
-        seed()
-        yield app.test_client()
-        db.drop_all()
-
-
-def login(c, email, pw="demo1234"):
-    r = c.post("/api/auth/login", json={"email": email, "password": pw})
-    assert r.status_code == 200, r.json
-    return {"Authorization": "Bearer " + r.json["token"]}
+from conftest import login, register_user
 
 
 def test_auth_and_roles(c):
@@ -31,15 +11,15 @@ def test_auth_and_roles(c):
 
 
 def test_register(c):
-    r = c.post("/api/auth/register", json={"email": "n@x.com", "password": "secret1", "full_name": "N X", "role": "buyer"})
+    r = register_user(c, {"email": "n@x.com", "password": "secret123", "full_name": "N X", "role": "buyer"})
     assert r.status_code == 201 and "token" in r.json
-    assert c.post("/api/auth/register", json={"email": "n@x.com", "password": "secret1", "full_name": "N"}).status_code == 409
-    d = {"email": "d@x.com", "password": "secret1", "full_name": "D", "role": "dealer", "business_name": "D Ltd",
-         "kra_pin": "A123456789Z", "county": "Nairobi"}
-    r = c.post("/api/auth/register", json=d)
+    assert c.post("/api/auth/register", json={"email": "n@x.com", "password": "secret123", "full_name": "N"}).status_code == 409
+    d = {"email": "d@x.com", "password": "secret123", "full_name": "D", "role": "dealer", "business_name": "D Ltd",
+         "id_number": "12345678", "county": "Nairobi"}
+    r = register_user(c, d)
     assert r.status_code == 201 and r.json["user"]["dealer"]["status"] == "pending"
     d["email"] = "e@x.com"
-    assert c.post("/api/auth/register", json=d).status_code == 409  # duplicate PIN
+    assert c.post("/api/auth/register", json=d).status_code == 409  
 
 
 def test_cars(c):
@@ -59,7 +39,7 @@ def test_full_deal_flow(c):
     assert c.post("/api/dealer/offers", headers=d, json={"request_id": req["id"], "price": 2800000}).status_code == 409
     mine = [r for r in c.get("/api/requests/mine", headers=b).json if r["id"] == req["id"]][0]
     off = mine["offers"][0]
-    assert off["price"] == 2900000 and off["dealer"]["phone"] is None  # phone hidden until accepted
+    assert off["price"] == 2900000 and off["dealer"]["phone"] is None  
     assert c.post(f"/api/offers/{off['id']}/accept", headers=d).status_code == 403
     assert c.post(f"/api/offers/{off['id']}/review", headers=b, json={"rating": 5}).status_code == 409
     assert c.post(f"/api/offers/{off['id']}/accept", headers=b).status_code == 200
@@ -79,9 +59,9 @@ def test_withdraw_and_reoffer(c):
 
 
 def test_unapproved_dealer_cannot_offer(c):
-    c.post("/api/auth/register", json={"email": "d@x.com", "password": "secret1", "full_name": "D", "role": "dealer",
-                                       "business_name": "D", "kra_pin": "A123456789Z", "county": "Nairobi"})
-    d = login(c, "d@x.com", "secret1")
+    register_user(c, {"email": "d@x.com", "password": "secret123", "full_name": "D", "role": "dealer",
+                      "business_name": "D", "id_number": "12345678", "county": "Nairobi"})
+    d = login(c, "d@x.com", "secret123")
     assert c.post("/api/dealer/offers", headers=d, json={"request_id": 1, "price": 5}).status_code == 403
 
 
@@ -122,7 +102,6 @@ def test_listing_photo_upload_and_management(c, tmp_path):
     from app import create_app
     from app.extensions import db
 
-    # Use an isolated folder for the uploaded image bytes.
     app = c.application
     app.config["UPLOAD_FOLDER"] = str(tmp_path)
     dealer = login(c, "dealer@demo.com")
@@ -144,7 +123,6 @@ def test_listing_photo_upload_and_management(c, tmp_path):
     assert public_listing["image_url"] == photo["url"]
     assert c.get(photo["url"]).status_code == 200
 
-    # Another dealer cannot change or delete this listing's photos.
     other = login(c, "capitalautohub@dealers.demo")
     assert c.delete(f"/api/dealer/listings/{listing_id}/images/{photo['id']}", headers=other).status_code == 404
     assert c.delete(f"/api/dealer/listings/{listing_id}/images/{photo['id']}", headers=dealer).status_code == 200
