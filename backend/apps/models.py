@@ -1,9 +1,7 @@
 
 from datetime import datetime, timezone
 
-from werkzeug.security import check_password_hash, generate_password_hash
-
-from .extensions import db
+from .extensions import bcrypt, db
 
 
 def utcnow():
@@ -11,7 +9,6 @@ def utcnow():
 
 
 def iso(dt):
-    
     return dt.isoformat(timespec="seconds") + "Z" if dt else None
 
 
@@ -29,18 +26,20 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     full_name = db.Column(db.String(150), nullable=False)
     phone = db.Column(db.String(20), default="")
-    role = db.Column(db.String(10), nullable=False, default="buyer")  # buyer|dealer|admin
+    role = db.Column(db.String(10), nullable=False, default="buyer")  
     county = db.Column(db.String(50), default="")
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
     dealer = db.relationship("DealerProfile", uselist=False, back_populates="user", cascade="all, delete-orphan")
 
     def set_password(self, pw):
-        
-        self.password_hash = generate_password_hash(pw, method="pbkdf2:sha256")
+        self.password_hash = bcrypt.generate_password_hash(pw).decode("utf-8")
 
     def check_password(self, pw):
-        return check_password_hash(self.password_hash, pw)
+        try:
+            return bcrypt.check_password_hash(self.password_hash, pw)
+        except ValueError:  
+            return False
 
     def to_dict(self):
         d = {
@@ -57,10 +56,10 @@ class DealerProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
     business_name = db.Column(db.String(150), nullable=False)
-    kra_pin = db.Column(db.String(20), unique=True, nullable=False)
+    id_number = db.Column(db.String(20), unique=True, nullable=False)  
     county = db.Column(db.String(50), nullable=False)
     address = db.Column(db.String(255), default="")
-    status = db.Column(db.String(10), nullable=False, default="pending")  # pending|approved|rejected
+    status = db.Column(db.String(10), nullable=False, default="pending")  
     rejection_reason = db.Column(db.Text, default="")
     verified_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
@@ -68,10 +67,32 @@ class DealerProfile(db.Model):
 
     def to_dict(self):
         return {
-            "business_name": self.business_name, "kra_pin": self.kra_pin, "county": self.county,
+            "business_name": self.business_name, "id_number": self.id_number, "county": self.county,
             "address": self.address or "", "status": self.status,
             "rejection_reason": self.rejection_reason or "", "verified_at": iso(self.verified_at),
         }
+
+
+class SignupOtp(db.Model):
+    __tablename__ = "signup_otps"
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(254), unique=True, nullable=False, index=True)
+    code_hash = db.Column(db.String(64), nullable=False)  
+    payload = db.Column(db.JSON, nullable=False)  
+    attempts = db.Column(db.Integer, nullable=False, default=0)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    last_sent_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+
+
+class PasswordReset(db.Model):
+    __tablename__ = "password_resets"
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(254), unique=True, nullable=False, index=True)
+    code_hash = db.Column(db.String(64), nullable=False)
+    attempts = db.Column(db.Integer, nullable=False, default=0)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    last_sent_at = db.Column(db.DateTime, nullable=False, default=utcnow)
 
 
 class Listing(db.Model):
@@ -81,16 +102,16 @@ class Listing(db.Model):
     make = db.Column(db.String(60), nullable=False)
     model = db.Column(db.String(80), nullable=False)
     year = db.Column(db.SmallInteger, nullable=False, index=True)
-    price = db.Column(db.Numeric(12, 2), nullable=False, index=True)  # KES
+    price = db.Column(db.Numeric(12, 2), nullable=False, index=True)  
     mileage_km = db.Column(db.Integer)
     fuel = db.Column(db.String(10), nullable=False)
     transmission = db.Column(db.String(10), nullable=False)
     body_type = db.Column(db.String(10))
-    color = db.Column(db.String(30))  # hex colour used by the frontend CarArt
+    color = db.Column(db.String(30))  
     engine_cc = db.Column(db.Integer)
     county = db.Column(db.String(50), nullable=False, index=True)
     description = db.Column(db.Text, default="")
-    status = db.Column(db.String(10), nullable=False, default="active", index=True)  # draft|active|sold|hidden
+    status = db.Column(db.String(10), nullable=False, default="active", index=True)  
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
     owner = db.relationship("User")
     images = db.relationship("ListingImage", back_populates="listing", cascade="all, delete-orphan", order_by="(ListingImage.is_primary.desc(), ListingImage.id.asc())")
@@ -136,7 +157,7 @@ class BuyerRequest(db.Model):
     body_type = db.Column(db.String(10), default="")
     county = db.Column(db.String(50), default="", index=True)
     notes = db.Column(db.Text, default="")
-    status = db.Column(db.String(10), nullable=False, default="open", index=True)  # open|fulfilled|closed
+    status = db.Column(db.String(10), nullable=False, default="open", index=True)  
     expires_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
     buyer = db.relationship("User")
@@ -169,7 +190,7 @@ class Offer(db.Model):
     listing_id = db.Column(db.Integer, db.ForeignKey("listings.id", ondelete="SET NULL"))
     price = db.Column(db.Numeric(12, 2), nullable=False)
     message = db.Column(db.Text, default="")
-    status = db.Column(db.String(10), nullable=False, default="pending")  # pending|accepted|declined|withdrawn
+    status = db.Column(db.String(10), nullable=False, default="pending")  
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
     request = db.relationship("BuyerRequest", back_populates="offers")
     dealer = db.relationship("User")
