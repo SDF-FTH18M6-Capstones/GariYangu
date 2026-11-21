@@ -34,6 +34,7 @@ export default function Login() {
       <form className="auth-card" onSubmit={submit}>
         <h1>Welcome back</h1>
         <p className="muted">Log in to see your offers or manage your dealership.</p>
+        {loc.state?.notice && !error && <Notice>{loc.state.notice}</Notice>}
         {error && <Notice tone="error">{error}</Notice>}
         <div className="field">
           <label htmlFor="email">Email</label>
@@ -43,6 +44,9 @@ export default function Login() {
           <label htmlFor="password">Password</label>
           <input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
+        <p className="muted-sm" style={{ textAlign: 'right', margin: '-4px 0 8px' }}>
+          <Link to="/forgot-password" state={{ email }} className="link">Forgot password?</Link>
+        </p>
         <button className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? 'Logging in…' : 'Log in'}</button>
         <p className="muted center">New here? <Link to="/register" state={loc.state} className="link">Create an account</Link></p>
         <div className="demo-box">
