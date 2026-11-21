@@ -1,24 +1,4 @@
-import pytest
-
-from app import create_app
-from app.extensions import db
-from app.seed import seed
-
-
-@pytest.fixture()
-def c():
-    app = create_app({"TESTING": True, "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:", "SECRET_KEY": "test-secret-key-that-is-long-enough-123456"})
-    with app.app_context():
-        db.create_all()
-        seed()
-        yield app.test_client()
-        db.drop_all()
-
-
-def login(c, email, pw="demo1234"):
-    r = c.post("/api/auth/login", json={"email": email, "password": pw})
-    assert r.status_code == 200, r.json
-    return {"Authorization": "Bearer " + r.json["token"]}
+from conftest import login, register_user
 
 
 def test_auth_and_roles(c):
@@ -31,15 +11,15 @@ def test_auth_and_roles(c):
 
 
 def test_register(c):
-    r = c.post("/api/auth/register", json={"email": "n@x.com", "password": "secret1", "full_name": "N X", "role": "buyer"})
+    r = register_user(c, {"email": "n@x.com", "password": "secret123", "full_name": "N X", "role": "buyer"})
     assert r.status_code == 201 and "token" in r.json
-    assert c.post("/api/auth/register", json={"email": "n@x.com", "password": "secret1", "full_name": "N"}).status_code == 409
-    d = {"email": "d@x.com", "password": "secret1", "full_name": "D", "role": "dealer", "business_name": "D Ltd",
-         "kra_pin": "A123456789Z", "county": "Nairobi"}
-    r = c.post("/api/auth/register", json=d)
+    assert c.post("/api/auth/register", json={"email": "n@x.com", "password": "secret123", "full_name": "N"}).status_code == 409
+    d = {"email": "d@x.com", "password": "secret123", "full_name": "D", "role": "dealer", "business_name": "D Ltd",
+         "id_number": "12345678", "county": "Nairobi"}
+    r = register_user(c, d)
     assert r.status_code == 201 and r.json["user"]["dealer"]["status"] == "pending"
     d["email"] = "e@x.com"
-    assert c.post("/api/auth/register", json=d).status_code == 409  # duplicate PIN
+    assert c.post("/api/auth/register", json=d).status_code == 409  # duplicate ID number
 
 
 def test_cars(c):
@@ -79,9 +59,9 @@ def test_withdraw_and_reoffer(c):
 
 
 def test_unapproved_dealer_cannot_offer(c):
-    c.post("/api/auth/register", json={"email": "d@x.com", "password": "secret1", "full_name": "D", "role": "dealer",
-                                       "business_name": "D", "kra_pin": "A123456789Z", "county": "Nairobi"})
-    d = login(c, "d@x.com", "secret1")
+    register_user(c, {"email": "d@x.com", "password": "secret123", "full_name": "D", "role": "dealer",
+                      "business_name": "D", "id_number": "12345678", "county": "Nairobi"})
+    d = login(c, "d@x.com", "secret123")
     assert c.post("/api/dealer/offers", headers=d, json={"request_id": 1, "price": 5}).status_code == 403
 
 

@@ -1,4 +1,3 @@
-
 import html
 import math
 import re
@@ -12,7 +11,7 @@ from .constants import BODIES, COUNTIES, FUELS, LISTING_STATUSES, ROLES_SELF_SER
 
 TAG_RE = re.compile(r"<[^>]*>")
 CTRL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
-KRA_RE = re.compile(r"^[AP]\d{9}[A-Z]$")
+ID_RE = re.compile(r"^\d{7,8}$")  # Kenyan National ID number
 PHONE_RE = re.compile(r"^\+?[0-9 ()-]{7,20}$")
 COLOR_RE = re.compile(r"^(#[0-9a-fA-F]{3,8}|[A-Za-z ]{1,30})$")
 MAX_MONEY = 10**10
@@ -32,7 +31,7 @@ def sanitize(text, multiline=False):
 
 
 class Clean(fields.String):
-    """String that is sanitized and length-limited. Empty -> '' (or None with allow_none)."""
+
 
     def __init__(self, max=255, multiline=False, **kw):
         self.multiline = multiline
@@ -43,7 +42,7 @@ class Clean(fields.String):
 
     def _deserialize(self, value, attr, data, **kw):
         text = sanitize(super()._deserialize(value, attr, data, **kw), self.multiline)
-        if not text and self.required: 
+        if not text and self.required:  # e.g. "   " or "<b></b>" counts as not sent
             raise self.make_error("required")
         return text
 
@@ -63,11 +62,11 @@ def _one_of(values, msg, **kw):
 
 class Base(Schema):
     class Meta:
-        unknown = EXCLUDE 
+        unknown = EXCLUDE  
 
     @pre_load
     def blank_to_missing(self, data, **kw):
-        """Treat '' and null the same as 'not sent' (HTML forms send empty strings)."""
+        
         if not isinstance(data, dict):
             return data
         return {k: v for k, v in data.items() if v not in ("", None)}
@@ -98,26 +97,25 @@ class RegisterSchema(Base):
     role = _one_of(ROLES_SELF_SERVICE, "Choose buyer or dealer.", load_default="buyer")
     county = _county(load_default="")
     business_name = Clean(max=150, load_default="")
-    kra_pin = Clean(max=11, load_default="")
+    id_number = Clean(max=20, load_default="")
     address = Clean(max=255, load_default="")
 
     @validates_schema
     def rules(self, d, **kw):
         pw = d.get("password", "")
-        if not 8 <= len(pw) <= 72 or len(pw.encode()) > 72:  
+        if not 8 <= len(pw) <= 72 or len(pw.encode()) > 72:  # bcrypt only uses the first 72 bytes
             raise ValidationError("Password must be 8 to 72 characters.", "password")
         if not d.get("full_name"):
             raise ValidationError("Enter your full name.", "full_name")
         if d.get("role") == "dealer":
             if not d.get("business_name"):
                 raise ValidationError("Enter your business name.", "business_name")
-            if not KRA_RE.match(d.get("kra_pin", "").upper()):
-                raise ValidationError("Enter a valid KRA PIN (e.g. A123456789Z).", "kra_pin")
+            if not ID_RE.match(d.get("id_number", "")):
+                raise ValidationError("Enter a valid National ID number (7 or 8 digits).", "id_number")
 
     @post_load
     def normalise(self, d, **kw):
         d["email"] = d["email"].lower()
-        d["kra_pin"] = d["kra_pin"].upper()
         return d
 
 
@@ -144,6 +142,44 @@ class RequestSchema(Base):
     @post_load
     def clamp_days(self, d, **kw):
         d["days"] = min(max(d["days"], 1), 90)
+        return d
+
+
+class VerifySignupSchema(Base):
+    email = Clean(max=254, required=True, error_messages={"required": "Enter your email."})
+    code = Clean(max=6, required=True, validate=validate.Regexp(r"^\d{6}$", error="Enter the 6-digit code."),
+                 error_messages={"required": "Enter the 6-digit code."})
+
+    @post_load
+    def lower(self, d, **kw):
+        d["email"] = d["email"].lower()
+        return d
+
+
+class ResendSchema(Base):
+    email = Clean(max=254, required=True, error_messages={"required": "Enter your email."})
+
+    @post_load
+    def lower(self, d, **kw):
+        d["email"] = d["email"].lower()
+        return d
+
+
+class ResetPasswordSchema(Base):
+    email = Clean(max=254, required=True, error_messages={"required": "Enter your email."})
+    code = Clean(max=6, required=True, validate=validate.Regexp(r"^\d{6}$", error="Enter the 6-digit code."),
+                 error_messages={"required": "Enter the 6-digit code."})
+    password = fields.String(required=True, error_messages={"required": "Password must be 8 to 72 characters."})
+
+    @validates_schema
+    def rules(self, d, **kw):
+        pw = d.get("password", "")
+        if not 8 <= len(pw) <= 72 or len(pw.encode()) > 72:
+            raise ValidationError("Password must be 8 to 72 characters.", "password")
+
+    @post_load
+    def lower(self, d, **kw):
+        d["email"] = d["email"].lower()
         return d
 
 
@@ -200,7 +236,7 @@ _DEFAULT_PREFIXES = ("Missing data", "Not a valid", "Must be", "Length must", "S
 
 def _first_message(errors):
     for field, msgs in errors.items():
-        if isinstance(msgs, dict):  
+        if isinstance(msgs, dict):  # nested
             return _first_message(msgs)
         msg = msgs[0] if isinstance(msgs, list) else str(msgs)
         if msg.startswith(_DEFAULT_PREFIXES):
@@ -210,7 +246,7 @@ def _first_message(errors):
 
 
 def load(schema_cls, data=None):
-    """Validate the JSON body (or `data`) with a schema; raise ApiError(400) on the first problem."""
+    
     if data is None:
         data = request.get_json(silent=True)
     if not isinstance(data, dict):

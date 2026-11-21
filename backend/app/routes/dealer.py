@@ -113,7 +113,7 @@ def stats():
     )
 
 
-
+# ---- listings ----
 def _clean_listing():
     d = load(ListingSchema)
     d["county"] = d["county"] or g.user.county or ""
@@ -177,7 +177,7 @@ def delete_listing(lid):
     return jsonify(ok=True)
 
 
-
+# ---- listing photo management ----
 ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP"}
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MAX_LISTING_IMAGES = 10

@@ -1,9 +1,7 @@
 
 from datetime import datetime, timezone
 
-from werkzeug.security import check_password_hash, generate_password_hash
-
-from .extensions import db
+from .extensions import bcrypt, db
 
 
 def utcnow():
@@ -36,11 +34,13 @@ class User(db.Model):
     dealer = db.relationship("DealerProfile", uselist=False, back_populates="user", cascade="all, delete-orphan")
 
     def set_password(self, pw):
-        
-        self.password_hash = generate_password_hash(pw, method="pbkdf2:sha256")
+        self.password_hash = bcrypt.generate_password_hash(pw).decode("utf-8")
 
     def check_password(self, pw):
-        return check_password_hash(self.password_hash, pw)
+        try:
+            return bcrypt.check_password_hash(self.password_hash, pw)
+        except ValueError:  
+            return False
 
     def to_dict(self):
         d = {
@@ -57,7 +57,7 @@ class DealerProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
     business_name = db.Column(db.String(150), nullable=False)
-    kra_pin = db.Column(db.String(20), unique=True, nullable=False)
+    id_number = db.Column(db.String(20), unique=True, nullable=False)  # Kenyan National ID number
     county = db.Column(db.String(50), nullable=False)
     address = db.Column(db.String(255), default="")
     status = db.Column(db.String(10), nullable=False, default="pending")  # pending|approved|rejected
@@ -68,10 +68,34 @@ class DealerProfile(db.Model):
 
     def to_dict(self):
         return {
-            "business_name": self.business_name, "kra_pin": self.kra_pin, "county": self.county,
+            "business_name": self.business_name, "id_number": self.id_number, "county": self.county,
             "address": self.address or "", "status": self.status,
             "rejection_reason": self.rejection_reason or "", "verified_at": iso(self.verified_at),
         }
+
+
+class SignupOtp(db.Model):
+    """A signup waiting for its emailed code. The account is only created once the code is verified."""
+    __tablename__ = "signup_otps"
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(254), unique=True, nullable=False, index=True)
+    code_hash = db.Column(db.String(64), nullable=False)  # HMAC of the code, never the code itself
+    payload = db.Column(db.JSON, nullable=False)  # validated signup data (password already bcrypt-hashed)
+    attempts = db.Column(db.Integer, nullable=False, default=0)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    last_sent_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+
+
+class PasswordReset(db.Model):
+    """A pending "forgot password" request: an emailed code that lets the owner choose a new password."""
+    __tablename__ = "password_resets"
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(254), unique=True, nullable=False, index=True)
+    code_hash = db.Column(db.String(64), nullable=False)
+    attempts = db.Column(db.Integer, nullable=False, default=0)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    last_sent_at = db.Column(db.DateTime, nullable=False, default=utcnow)
 
 
 class Listing(db.Model):

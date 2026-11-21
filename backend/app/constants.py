@@ -1,8 +1,10 @@
+
 ROLES_SELF_SERVICE = ("buyer", "dealer")
 FUELS = ("petrol", "diesel", "hybrid", "electric")
 TRANSMISSIONS = ("manual", "automatic")
 BODIES = ("sedan", "suv", "hatchback", "pickup", "van", "wagon", "coupe")
 LISTING_STATUSES = ("draft", "active", "sold", "hidden")
+
 
 COUNTIES = (
     "Baringo", "Bomet", "Bungoma", "Busia", "Elgeyo-Marakwet", "Embu", "Garissa", "Homa Bay", "Isiolo", "Kajiado",

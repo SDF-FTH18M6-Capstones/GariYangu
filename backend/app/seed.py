@@ -1,4 +1,3 @@
-
 import json
 import re
 from datetime import timedelta
@@ -18,7 +17,7 @@ def seed():
     cars = json.loads((Path(__file__).parent / "seed_cars.json").read_text())
 
     def pin(i):
-        return "A" + str(100000000 + i * 7919317)[:9] + "Z"
+        return str(20000000 + i * 104729)  
 
     def user(id, email, name, role, county, phone="", days=30):
         u = User(id=id, email=email, full_name=name, role=role, county=county, phone=phone, created_at=ago(days))
@@ -28,7 +27,7 @@ def seed():
 
     def dealer(id, biz, county, status, email, phone):
         u = user(id, email, biz + " Sales", "dealer", county, phone, 60)
-        u.dealer = DealerProfile(business_name=biz, kra_pin=pin(id), county=county, address=f"{county} town", status=status,
+        u.dealer = DealerProfile(business_name=biz, id_number=pin(id), county=county, address=f"{county} town", status=status,
                                  verified_at=ago(50) if status == "approved" else None, created_at=ago(60))
         return u
 
