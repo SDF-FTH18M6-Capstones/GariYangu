@@ -5,13 +5,12 @@ Reverse car marketplace: buyers post what they want, verified dealers send offer
     gari-yangu/
     ├── backend/    Flask API (SQLAlchemy, Marshmallow, Flask-JWT-Extended, Flask-Bcrypt; SQLite by default)
     ├── frontend/   React + Vite app (talks to the API through src/api.js)
-    ├── docs/       schema diagram, wireframes, Postman collection, backlog, sprint gates
-    ├── scripts/    bootstrap_github.sh (repo + board + issues)
+    ├── docs/       schema diagram, wireframes
     └── gari-yangu-schema.dbml
 
 ## Run it (development) – two terminals
 
-Requirements: **Python 3.10+** and **Node 18+**. Project plan, gate checklists and proof: [`docs/SPRINTS.md`](docs/SPRINTS.md). Backlog: [`docs/BACKLOG.md`](docs/BACKLOG.md).
+Requirements: **Python 3.10+** and **Node 18+**. 
 
 **Terminal 1 – backend** (http://localhost:8000)
 
