@@ -99,7 +99,7 @@ Rules enforced server-side: role checks, ownership checks, only approved dealers
 - **Docker:** `docker build -t gari-yangu .` then `docker run -p 8000:8000 -e SECRET_KEY=... -e DATABASE_URL=... -v gy-data:/data gari-yangu`.
 - Create the first admin yourself in production (demo accounts are not loaded): run `flask --app run shell`, create a `User` with `role="admin"` and `set_password(...)`.
 
-## Gari Yangu 2.0 visual refresh
+## Gari Yangu  visual refresh
 
 The React/Vite frontend now uses a futuristic luxury visual direction: a midnight/graphite interface, electric-lime accents, cinematic hero treatment, glass-style search panel, refined vehicle cards, dashboard surfaces, dark forms, responsive layouts, and reduced-motion support. Existing React routes, API client calls, authentication flow, and Flask backend files are retained.
 
