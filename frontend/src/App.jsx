@@ -9,6 +9,7 @@ import Browse from './pages/Browse.jsx'
 import CarDetail from './pages/CarDetail.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
+import ForgotPassword from './pages/ForgotPassword.jsx'
 import PostRequest from './pages/buyer/PostRequest.jsx'
 import MyOffers from './pages/buyer/MyOffers.jsx'
 import Dashboard from './pages/dealer/Dashboard.jsx'
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="/cars/:id" element={<CarDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           {/* Open to guests so they can fill the form; posting requires a buyer login. */}
           <Route path="/post-request" element={<PostRequest />} />
           <Route path="/my-offers" element={buyer(<MyOffers />)} />
