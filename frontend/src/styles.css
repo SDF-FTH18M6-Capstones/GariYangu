@@ -557,7 +557,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .notice { padding:14px 17px;color:#dce8d7;font-size:13px; }
 .notice.success { border-color:#b8ff3650;background:#b8ff360d; }
 .notice.error { border-color:#ff646450;background:#ff64640d; }
-.notice.info { border-color:#8ab8ff50;background:#8ab8ff0d; }
+.notice.info { color: #b8ff36;border-color: #b8ff3650;  background: #b8ff360d; }
 .badge { border:1px solid transparent;font-size:10px;letter-spacing:.04em; }
 .badge.gray { background:#ffffff0c;color:#b4c0b1;border-color:var(--line); }
 .badge.green { background:#b8ff3615;color:var(--green);border-color:#b8ff3635; }
@@ -730,3 +730,87 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .hero-art > .hero-vehicle-photo { width: 130%; right: -10%; height: 260px; }
 }
 .link-btn:disabled { opacity: .55; cursor: default; }
+
+/* ==========================================
+   GARI YANGU - DEALER DASHBOARD COLOR FIX
+   ========================================== */
+
+/* Dashboard statistic cards */
+.stat {
+  background: #111913;
+  border: 1px solid rgba(220, 240, 215, 0.12);
+  color: #F1F5EE;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.22);
+  transition: all 0.25s ease;
+}
+
+.stat strong {
+  color: #B8FF36;
+}
+
+.stat span {
+  color: #9AA79A;
+}
+
+a.stat:hover {
+  border-color: #B8FF36;
+  background: #172319;
+  transform: translateY(-3px);
+}
+
+/* Offers table */
+.table-wrap {
+  background: #111913;
+  border: 1px solid rgba(220, 240, 215, 0.12);
+  border-radius: 20px;
+  overflow-x: auto;
+}
+
+.table {
+  background: transparent;
+  color: #F1F5EE;
+}
+
+.table th {
+  background: #172119;
+  color: #B8FF36;
+  border-bottom: 1px solid rgba(220, 240, 215, 0.12);
+}
+
+.table td {
+  color: #E1E9DD;
+  border-bottom: 1px solid rgba(220, 240, 215, 0.09);
+}
+
+.table td strong {
+  color: #F1F5EE;
+}
+
+.table tr:hover {
+  background: rgba(184, 255, 54, 0.035);
+}
+
+/* Dashboard headings */
+.h3 {
+  color: #F1F5EE;
+}
+
+/* Secondary text */
+.muted,
+.muted-sm {
+  color: #9AA79A;
+}
+
+/* Status and rating visibility */
+.stars-sm {
+  color: #FFBF47;
+}
+
+.stars-sm b {
+  color: #F1F5EE;
+}
+
+/* Dashboard page spacing */
+.page-body {
+  color: #F1F5EE;
+}
