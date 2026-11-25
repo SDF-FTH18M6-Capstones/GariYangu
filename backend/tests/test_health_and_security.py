@@ -27,7 +27,6 @@ def test_security_headers(c):
     assert h["X-Content-Type-Options"] == "nosniff" and h["X-Frame-Options"] == "DENY"
 
 
-# ---------- Sprint 5: CORS ----------
 def test_cors_allows_configured_origin(c):
     r = c.get("/api/health", headers={"Origin": ORIGIN})
     assert r.headers.get("Access-Control-Allow-Origin") == ORIGIN
